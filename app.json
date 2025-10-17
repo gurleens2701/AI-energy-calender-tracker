@@ -1,15 +1,20 @@
 {
   "expo": {
-    "name": "habitanalyzer",
+    "name": "GrowthX",
     "slug": "habitanalyzer",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/taskflowai.png",
     "scheme": "habitanalyzer",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gurleensingh.growthx",
+      "buildNumber": "1" ,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -43,6 +48,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7e6547b2-5d6d-499b-99cb-5b2b6e87710d"
+      }
     }
   }
 }

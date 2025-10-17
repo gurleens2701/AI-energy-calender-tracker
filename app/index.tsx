@@ -1,123 +1,167 @@
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, Alert , ScrollView} from "react-native";
 import { RootStackParamList } from "../types";
+import { supabase } from "@/supabase-client";
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 type TaskListNavigationProp = NativeStackNavigationProp<RootStackParamList, "TaskList">;
 
 // main page where tasks display
 
-const TaskList = ({ tasks, deleteToDo, onToggleComplete }: { tasks: { title: string; description: string, completed: boolean , lastToggled?: string, priority?: string , mood?: string}[]; deleteToDo: (index: number) => void; onToggleComplete: (index: number) => void;  }) => {
+const TaskList = ({ tasks, deleteToDo, onToggleComplete }: { tasks: { title: string; description: string, is_completed: boolean , completed_at?: string, priority?: string , mood?: string}[]; deleteToDo: (index: number) => void; onToggleComplete: (index: number) => void;  }) => {
   const navigation = useNavigation<TaskListNavigationProp>();
   
 
   // Calculate task statistics
-  const completedTasks = tasks.filter(task => task.completed).length;
+  const completedTasks = tasks.filter(task => task.is_completed).length;
   const totalTasks = tasks.length;
 
 
 
+   // Helper function to format date display
+   const formatCompletedAt = (completedAt: string | undefined): string => {
+    if (!completedAt) return '';
+    
+    const date = new Date(completedAt);
+    const today = new Date();
+    
+    // Check if it's today
+    const isToday = date.getDate() === today.getDate() &&
+                   date.getMonth() === today.getMonth() &&
+                   date.getFullYear() === today.getFullYear();
+    
+    if (isToday) {
+      return `Completed today at ${date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })}`;
+    } else {
+      return `Completed on ${date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      })} at ${date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })}`;
+    }
+  };
+
+  // Logout function
+  const handleLogout = async () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const { error } = await supabase.auth.signOut();
+              if (error) {
+                Alert.alert('Error', 'Failed to logout. Please try again.');
+                console.error('Logout error:', error);
+              }
+            } catch (err) {
+              console.error('Logout error:', err);
+              Alert.alert('Error', 'An unexpected error occurred during logout.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+
   return (
     <View style={styles.container}>
-      {/* Top row for Add button */}
-      <View style={styles.headerContainer}>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => navigation.navigate("AddTask")}
-        >
-          <Text style={styles.addButtonText}>+ Add Task</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Task Counter */}
-      {totalTasks > 0 && (
-        <View style={styles.counterContainer}>
-          <Text style={styles.counterText}>
-            {completedTasks} of {totalTasks} completed
-          </Text>
-        </View>
-      )}
-
-      {/* Empty State */}
-      {totalTasks === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateTitle}>No tasks yet! 📝</Text>
-          <Text style={styles.emptyStateSubtitle}>Tap 'Add Task' to get started</Text>
-        </View>
-      ) : (
-        /* Task list */
-        <FlatList
-          data={tasks}
-          keyExtractor={(item, index) => index.toString()}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item , index}) => (
-            <View style={[
-              styles.taskCard, 
-              item.completed ? styles.completedTaskCard : styles.activeTaskCard
-            ]}>
-
-              {/* Right side: delete + checkbox placeholder */}
-              <View style={styles.taskActions}>
-                {/* Later this □ will toggle to ☑ */}
-                <TouchableOpacity onPress={() => deleteToDo(index)}>
-                    <Text style={styles.actionIcon}>🗑</Text>
-                </TouchableOpacity>
-
-              {/* Checkbox */}
+      <FlatList
+        data={tasks}
+        keyExtractor={(item, index) => index.toString()}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <>
+            {/* Top row for Add button */}
+            <View style={styles.headerContainer}>
               <TouchableOpacity
-                style={[styles.checkbox, item.completed && styles.checkboxChecked]}
-                onPress={() => onToggleComplete(index)}
-                
-                
+                style={styles.logoutButton}
+                onPress={handleLogout}
               >
-                {item.completed &&  <Text style={styles.checkmark}>✓</Text>}
-                
-                
-                
+                <Text style={styles.logoutButtonText}>Logout</Text>
               </TouchableOpacity>
-
-              {/* Task text */}
+              
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => navigation.navigate("AddTask")}
+              >
+                <Text style={styles.addButtonText}>+ Add Task</Text>
+              </TouchableOpacity>
+            </View>
+  
+            {/* Task Counter */}
+            {totalTasks > 0 && (
+              <View style={styles.counterContainer}>
+                <Text style={styles.counterText}>
+                  {completedTasks} of {totalTasks} completed today
+                </Text>
+              </View>
+            )}
+          </>
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateTitle}>No tasks yet! 📝</Text>
+            <Text style={styles.emptyStateSubtitle}>Tap 'Add Task' to get started</Text>
+          </View>
+        }
+        renderItem={({ item, index }) => (
+          <View style={[
+            styles.taskCard, 
+            item.is_completed ? styles.completedTaskCard : styles.activeTaskCard 
+          ]}>
+            {/* Your existing task card code stays exactly the same */}
+            <View style={styles.taskActions}>
+              <TouchableOpacity onPress={() => deleteToDo(index)}>
+                <Text style={styles.actionIcon}>🗑</Text>
+              </TouchableOpacity>
+  
+              <TouchableOpacity
+                style={[styles.checkbox, item.is_completed && styles.checkboxChecked]}
+                onPress={() => onToggleComplete(index)}
+              >
+                {item.is_completed && <Text style={styles.checkmark}>✓</Text>}
+              </TouchableOpacity>
+  
               <View style={styles.taskTextContainer}>
                 <Text style={[
                   styles.taskTitle, 
-                  item.completed && styles.completedText
+                  item.is_completed && styles.completedText
                 ]}>
                   {item.title}
                 </Text>
                 <Text style={[
                   styles.taskDescription, 
-                  item.completed && styles.completedText
+                  item.is_completed && styles.completedText
                 ]}>
                   {item.description}
                 </Text>
-                {item.lastToggled && (
-                <Text style={styles.timestamp}>Last Toggled: {item.lastToggled}</Text>
-                )}
-             
                 
                 {item.priority && (
-                <Text style={styles.prioritylevel}>
+                  <Text style={styles.prioritylevel}>
                     Priority: {item.priority}
-                </Text>
-                )}
-
-                {item.mood && (
-                  <Text style={styles.moodlevel}>
-                    mood: {item.mood}
                   </Text>
                 )}
-
-
-
-               
-              </View>
-
               </View>
             </View>
-          )}
-        />
-      )}
+          </View>
+        )}
+      />
     </View>
   );
 };
@@ -132,9 +176,27 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     width: "100%",
-    alignItems: "flex-end",
     marginBottom: 20,
+  },
+  logoutButton: {
+    backgroundColor: "#ff4444",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 4,
+  },
+  logoutButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "700",
   },
   addButton: {
     backgroundColor: "#007AFF",
@@ -255,6 +317,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     marginTop: 4,
+    fontStyle: "italic", // Added this line
   },
 
   prioritylevel: {

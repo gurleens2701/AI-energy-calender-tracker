@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet , TextInput, FlatList, Button, Alert} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet , TextInput, FlatList, Button, Alert, ScrollView} from "react-native";
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from "../types";
@@ -18,7 +18,6 @@ const AddTask = ({ addTask }: { addTask: (title: string, description: string, pr
     const [priority, setPriority] = useState('');
 
   
-    
     const navigation = useNavigation();
 
     const handleSaveTask = () => {
@@ -43,10 +42,11 @@ const AddTask = ({ addTask }: { addTask: (title: string, description: string, pr
 // priority button selection
     return (
        
-        <View style={styles.container}>
+        <ScrollView style={styles.container}>
             <TextInput
                 style={styles.input}
-                placeholder="title"
+                placeholder="title || completion time ( workout - 1 hour)"
+                placeholderTextColor="#555" 
                 value={title}
                 onChangeText={setTitle}
             />
@@ -54,6 +54,7 @@ const AddTask = ({ addTask }: { addTask: (title: string, description: string, pr
             <TextInput
                 style={styles.input}
                 placeholder="description"
+                placeholderTextColor="#555" 
                 value={description}
                 onChangeText={setDescription}
 
@@ -86,7 +87,7 @@ const AddTask = ({ addTask }: { addTask: (title: string, description: string, pr
             <TouchableOpacity style={styles.addButton} onPress={handleSaveTask}>
                 <Text style={styles.addButtonText}>Save</Text>
             </TouchableOpacity>
-        </View>
+        </ScrollView>
        
     );
 };
@@ -106,6 +107,8 @@ const styles = StyleSheet.create({
       marginBottom: 15,
       fontSize: 16,
       backgroundColor: "#fff",
+      color: "#000", // ADD THIS - makes text black/bright
+        fontWeight: "500", // ADD THIS - makes text slightly bolder
     },
     addButton: {
         backgroundColor: "#007AFF",
@@ -125,14 +128,29 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
       },
-      pbuttonl:{
-
+      pbuttonl: {
+        backgroundColor: '#4CAF50', // Green for low
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginBottom: 10,
+        alignItems: 'center',
       },
       pbuttonm: {
-
+        backgroundColor: '#FF9800', // Orange for medium
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginBottom: 10,
+        alignItems: 'center',
       },
-      pbuttonh:{
-
+      pbuttonh: {
+        backgroundColor: '#f44336', // Red for high
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginBottom: 10,
+        alignItems: 'center',
       },
   
   
